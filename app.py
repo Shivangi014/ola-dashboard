@@ -69,16 +69,6 @@ col3.metric(
     round(filtered_df["Customer_Rating"].mean(),2)
 )
 
-cancel_rate = (
-    len(filtered_df[filtered_df["Booking_Status"] != "Success"])
-    / len(filtered_df)
-)*100
-
-col4.metric(
-    "Cancellation %",
-    round(cancel_rate,2)
-)
-
 # -------------------------
 # FILTERED DATA TABLE
 # -------------------------
