@@ -1,126 +1,114 @@
 import streamlit as st
 import pandas as pd
-
-# -------------------------
-# PAGE CONFIG
-# -------------------------
-
+import plotly.express as px
+# page config
 st.set_page_config(
     page_title="OLA Ride Insights",
     layout="wide"
 )
 
+# load data
+df = pd.read_csv("ola_rides.csv")
+
 st.title("🚖 OLA Ride Insights Dashboard")
 
-# -------------------------
-# LOAD DATA
-# -------------------------
-
-df = pd.read_csv("clean_ola_data.csv")
-
-# -------------------------
 # SIDEBAR FILTERS
-# -------------------------
-
-st.sidebar.header("Filter Data")
+st.sidebar.header("Filters")
 
 vehicle = st.sidebar.multiselect(
-    "Vehicle Type",
-    options=df["Vehicle_Type"].dropna().unique(),
-    default=df["Vehicle_Type"].dropna().unique()
+    "Select Vehicle Type",
+    df["vehicle_type"].unique(),
+    default=df["vehicle_type"].unique()
 )
 
 payment = st.sidebar.multiselect(
     "Payment Method",
-    options=df["Payment_Method"].dropna().unique(),
-    default=df["Payment_Method"].dropna().unique()
+    df["payment_method"].unique(),
+    default=df["payment_method"].unique()
 )
 
-status = st.sidebar.multiselect(
-    "Booking Status",
-    options=df["Booking_Status"].dropna().unique(),
-    default=df["Booking_Status"].dropna().unique()
+date_range = st.sidebar.date_input(
+    "Select Date Range",
+    [df["date"].min(), df["date"].max()]
 )
 
-# apply filters
+# filter dataset
 filtered_df = df[
-    (df["Vehicle_Type"].isin(vehicle)) &
-    (df["Payment_Method"].isin(payment)) &
-    (df["Booking_Status"].isin(status))
+    (df["vehicle_type"].isin(vehicle)) &
+    (df["payment_method"].isin(payment)) &
+    (df["date"] >= str(date_range[0])) &
+    (df["date"] <= str(date_range[1]))
 ]
 
-# -------------------------
-# KPI METRICS
-# -------------------------
+# KPI SECTION
+col1, col2, col3 = st.columns(3)
 
-st.subheader("📊 Key Performance Indicators")
-
-col1, col2, col3, col4 = st.columns(4)
-
-col1.metric("Total Rides", len(filtered_df))
+col1.metric(
+    "Total Revenue",
+    round(filtered_df["booking_value"].sum(),2)
+)
 
 col2.metric(
-    "Total Revenue ₹",
-    int(filtered_df["Booking_Value"].sum())
+    "Total Rides",
+    len(filtered_df)
 )
 
 col3.metric(
-    "Avg Customer Rating",
-    round(filtered_df["Customer_Rating"].mean(),2)
+    "Avg Rating",
+    round(filtered_df["driver_rating"].mean(),2)
 )
 
-# -------------------------
-# FILTERED DATA TABLE
-# -------------------------
+st.divider()
 
-st.subheader("📄 Filtered Dataset")
+# CHARTS
 
-st.dataframe(filtered_df)
+col1, col2 = st.columns(2)
 
-# -------------------------
-# SQL-LIKE INSIGHTS
-# -------------------------
+with col1:
+    fig = px.line(
+        filtered_df,
+        x="date",
+        y="booking_value",
+        title="Revenue Trend"
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
-st.subheader("📈 Insights")
+with col2:
+    fig2 = px.pie(
+        filtered_df,
+        names="payment_method",
+        title="Payment Distribution"
+    )
+    st.plotly_chart(fig2, use_container_width=True)
 
-# avg ride distance
-avg_distance = (
-    filtered_df
-    .groupby("Vehicle_Type")["Ride_Distance"]
-    .mean()
-    .reset_index()
+# vehicle analysis
+fig3 = px.bar(
+    filtered_df,
+    x="vehicle_type",
+    y="ride_distance",
+    title="Ride Distance by Vehicle"
 )
 
-st.write("Average Ride Distance by Vehicle Type")
+st.plotly_chart(fig3, use_container_width=True)
 
-st.dataframe(avg_distance)
-
-# revenue by payment
-revenue = (
-    filtered_df
-    .groupby("Payment_Method")["Booking_Value"]
-    .sum()
-    .reset_index()
+# rating distribution
+fig4 = px.histogram(
+    filtered_df,
+    x="driver_rating",
+    title="Driver Rating Distribution"
 )
 
-st.write("Revenue by Payment Method")
+st.plotly_chart(fig4, use_container_width=True)
 
-st.dataframe(revenue)
+# powerbi integration
+st.subheader("Power BI Dashboard")
 
-# top customers
-top_customers = (
-    filtered_df
-    .groupby("Customer_ID")["Booking_Value"]
-    .sum()
-    .reset_index()
-    .sort_values(by="Booking_Value", ascending=False)
-    .head(5)
+powerbi_url = "PASTE_LINK"
+
+st.components.v1.iframe(
+    powerbi_url,
+    height=600
 )
-
-st.write("Top 5 Customers by Spending")
-
-st.dataframe(top_customers)
-
 # -------------------------
 # POWER BI DASHBOARD IMAGES
 # -------------------------
