@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 # page config
 st.set_page_config(
     page_title="OLA Ride Insights",
