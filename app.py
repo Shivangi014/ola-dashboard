@@ -1,113 +1,126 @@
 import streamlit as st
 import pandas as pd
-# page config
+
+# -------------------------
+# PAGE CONFIG
+# -------------------------
+
 st.set_page_config(
     page_title="OLA Ride Insights",
     layout="wide"
 )
 
-# load data
-df = pd.read_csv("ola_rides.csv")
-
 st.title("🚖 OLA Ride Insights Dashboard")
 
+# -------------------------
+# LOAD DATA
+# -------------------------
+
+df = pd.read_csv("clean_ola_data.csv")
+
+# -------------------------
 # SIDEBAR FILTERS
-st.sidebar.header("Filters")
+# -------------------------
+
+st.sidebar.header("Filter Data")
 
 vehicle = st.sidebar.multiselect(
-    "Select Vehicle Type",
-    df["vehicle_type"].unique(),
-    default=df["vehicle_type"].unique()
+    "Vehicle Type",
+    options=df["Vehicle_Type"].dropna().unique(),
+    default=df["Vehicle_Type"].dropna().unique()
 )
 
 payment = st.sidebar.multiselect(
     "Payment Method",
-    df["payment_method"].unique(),
-    default=df["payment_method"].unique()
+    options=df["Payment_Method"].dropna().unique(),
+    default=df["Payment_Method"].dropna().unique()
 )
 
-date_range = st.sidebar.date_input(
-    "Select Date Range",
-    [df["date"].min(), df["date"].max()]
+status = st.sidebar.multiselect(
+    "Booking Status",
+    options=df["Booking_Status"].dropna().unique(),
+    default=df["Booking_Status"].dropna().unique()
 )
 
-# filter dataset
+# apply filters
 filtered_df = df[
-    (df["vehicle_type"].isin(vehicle)) &
-    (df["payment_method"].isin(payment)) &
-    (df["date"] >= str(date_range[0])) &
-    (df["date"] <= str(date_range[1]))
+    (df["Vehicle_Type"].isin(vehicle)) &
+    (df["Payment_Method"].isin(payment)) &
+    (df["Booking_Status"].isin(status))
 ]
 
-# KPI SECTION
-col1, col2, col3 = st.columns(3)
+# -------------------------
+# KPI METRICS
+# -------------------------
 
-col1.metric(
-    "Total Revenue",
-    round(filtered_df["booking_value"].sum(),2)
-)
+st.subheader("📊 Key Performance Indicators")
+
+col1, col2, col3, col4 = st.columns(4)
+
+col1.metric("Total Rides", len(filtered_df))
 
 col2.metric(
-    "Total Rides",
-    len(filtered_df)
+    "Total Revenue ₹",
+    int(filtered_df["Booking_Value"].sum())
 )
 
 col3.metric(
-    "Avg Rating",
-    round(filtered_df["driver_rating"].mean(),2)
+    "Avg Customer Rating",
+    round(filtered_df["Customer_Rating"].mean(),2)
 )
 
-st.divider()
+# -------------------------
+# FILTERED DATA TABLE
+# -------------------------
 
-# CHARTS
+st.subheader("📄 Filtered Dataset")
 
-col1, col2 = st.columns(2)
+st.dataframe(filtered_df)
 
-with col1:
-    fig = px.line(
-        filtered_df,
-        x="date",
-        y="booking_value",
-        title="Revenue Trend"
-    )
-    st.plotly_chart(fig, use_container_width=True)
+# -------------------------
+# SQL-LIKE INSIGHTS
+# -------------------------
 
-with col2:
-    fig2 = px.pie(
-        filtered_df,
-        names="payment_method",
-        title="Payment Distribution"
-    )
-    st.plotly_chart(fig2, use_container_width=True)
+st.subheader("📈 Insights")
 
-# vehicle analysis
-fig3 = px.bar(
-    filtered_df,
-    x="vehicle_type",
-    y="ride_distance",
-    title="Ride Distance by Vehicle"
+# avg ride distance
+avg_distance = (
+    filtered_df
+    .groupby("Vehicle_Type")["Ride_Distance"]
+    .mean()
+    .reset_index()
 )
 
-st.plotly_chart(fig3, use_container_width=True)
+st.write("Average Ride Distance by Vehicle Type")
 
-# rating distribution
-fig4 = px.histogram(
-    filtered_df,
-    x="driver_rating",
-    title="Driver Rating Distribution"
+st.dataframe(avg_distance)
+
+# revenue by payment
+revenue = (
+    filtered_df
+    .groupby("Payment_Method")["Booking_Value"]
+    .sum()
+    .reset_index()
 )
 
-st.plotly_chart(fig4, use_container_width=True)
+st.write("Revenue by Payment Method")
 
-# powerbi integration
-st.subheader("Power BI Dashboard")
+st.dataframe(revenue)
 
-powerbi_url = "PASTE_LINK"
-
-st.components.v1.iframe(
-    powerbi_url,
-    height=600
+# top customers
+top_customers = (
+    filtered_df
+    .groupby("Customer_ID")["Booking_Value"]
+    .sum()
+    .reset_index()
+    .sort_values(by="Booking_Value", ascending=False)
+    .head(5)
 )
+
+st.write("Top 5 Customers by Spending")
+
+st.dataframe(top_customers)
+
 # -------------------------
 # POWER BI DASHBOARD IMAGES
 # -------------------------
