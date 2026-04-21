@@ -138,16 +138,16 @@ st.dataframe(top_customers)
 st.subheader("📊 Power BI Dashboards")
 
 st.write("Overall View")
-st.image("dashboards/overall.png")
+st.image("overall.png.png")
 
 st.write("Vehicle Type Analysis")
-st.image("dashboards/vehicle.png")
+st.image("vehicle.png.png")
 
 st.write("Revenue Analysis")
-st.image("dashboards/revenue.png")
+st.image("revenue.png.png")
 
 st.write("Cancellation Analysis")
-st.image("dashboards/cancellation.png")
+st.image("cancellation.png.png")
 
 st.write("Ratings Analysis")
-st.image("dashboards/ratings.png")
+st.image("ratings.png.png")
