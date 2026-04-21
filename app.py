@@ -16,7 +16,7 @@ st.title("🚖 OLA Ride Insights Dashboard")
 # LOAD DATA
 # -------------------------
 
-df = pd.read_csv("data/clean_ola_data.csv")
+df = pd.read_csv("clean_ola_data.csv")
 
 # -------------------------
 # SIDEBAR FILTERS
